@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced Investment Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --secondary: #06b6d4;
+      --accent: #10b981;
+      --bg: #eef2f7;
+      --text: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 2.5rem;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.4rem;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #64748b;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    .section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      display: block;
+      color: #334155;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+      outline: none;
+      background: #fff;
+    }
+
+    button {
+      width: 100%;
+      padding: 1rem;
+      margin-top: 1rem;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .result {
+      margin-top: 2rem;
+      background: #f0f9ff;
+      border-left: 6px solid var(--accent);
+      padding: 1.5rem;
+      border-radius: 12px;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .result strong {
+      display: block;
+      margin-bottom: 0.6rem;
+      font-size: 1.05rem;
+    }
+
+    .charts {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      margin-top: 2.5rem;
+    }
+
+    canvas {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .table-section {
+      margin-top: 3rem;
+    }
+
+    .table-section h2 {
+      font-size: 1.4rem;
+      color: #1e293b;
+      margin-bottom: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      text-align: right;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #475569;
+    }
+
+    @media (max-width: 768px) {
+      .charts {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Advanced Investment Calculator</h1>
+    <p class="subtitle">Calculate your investment growth, leverage impact, and inflation-adjusted returns over time.</p>
+
+    <form id="calculator-form">
+      <div class="section">
+        <div><label>Initial Investment ($)</label><input type="number" id="initial" required></div>
+        <div><label>Borrowed Amount (Leverage) ($)</label><input type="number" id="borrowed" value="0"></div>
+        <div><label>Interest Rate on Borrowed Money (%)</label><input type="number" step="0.01" id="borrowedRate" value="0"></div>
+        <div>
+          <label>Leverage Frequency</label>
+          <select id="leverageFrequency">
+            <option value="once" selected>Once at Start</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div><label>Monthly Contribution ($)</label><input type="number" id="monthly" required></div>
+        <div><label>Annual Interest Rate (%)</label><input type="number" step="0.01" id="rate" required></div>
+        <div><label>Investment Duration (Years)</label><input type="number" id="years" required></div>
+        <div><label>Compound Frequency</label>
+          <select id="compound">
+            <option value="1">Annually</option>
+            <option value="4">Quarterly</option>
+            <option value="12" selected>Monthly</option>
+            <option value="365">Daily</option>
+          </select>
+        </div>
+        <div><label>Inflation Rate (%)</label><input type="number" step="0.01" id="inflation" value="0"></div>
+        <div><label>Annual Contribution Increase (%)</label><input type="number" step="0.01" id="contribIncrease" value="0"></div>
+      </div>
+      <button type="submit">📈 Calculate Investment</button>
+    </form>
+
+    <div class="result" id="result" style="display: none;"></div>
+
+    <div class="charts">
+      <canvas id="barChart" height="300"></canvas>
+      <canvas id="pieChart" height="300"></canvas>
+    </div>
+
+    <div class="table-section">
+      <h2>Accumulation Schedule</h2>
+      <table id="accumulationTable" style="display:none">
+        <thead>
+          <tr><th>Year</th><th>Deposit</th><th>Interest</th><th>Borrow Interest</th><th>Ending Balance</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const format = n => parseFloat(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const form = document.getElementById('calculator-form');
+    const result = document.getElementById('result');
+    const tbody = document.querySelector('#accumulationTable tbody');
+    let barChart, pieChart;
+
+    form.onsubmit = e => {
+      e.preventDefault();
+      const initial = parseFloat(document.getElementById('initial').value);
+      const borrowed = parseFloat(document.getElementById('borrowed').value);
+      const borrowedRate = parseFloat(document.getElementById('borrowedRate').value) / 100;
+      const monthly = parseFloat(document.getElementById('monthly').value);
+      const rate = parseFloat(document.getElementById('rate').value) / 100;
+      const years = parseInt(document.getElementById('years').value);
+      const compound = parseInt(document.getElementById('compound').value);
+      const inflation = parseFloat(document.getElementById('inflation').value) / 100;
+      const contribIncrease = parseFloat(document.getElementById('contribIncrease').value) / 100;
+      const leverageFrequency = document.getElementById('leverageFrequency').value;
+
+      let balance = initial;
+      let monthlyRate = rate / 12;
+      let borrowedMonthlyRate = borrowedRate / 12;
+      let contribution = monthly;
+      let totalContrib = initial;
+      let totalBorrowInterest = 0;
+
+      let rows = [], labels = [], barData = [], interestData = [], contribData = [];
+
+      for (let y = 1; y <= years; y++) {
+        let deposit = 0, interest = 0, borrowInterest = 0;
+
+        if (leverageFrequency === 'yearly') {
+          balance += borrowed;
+          totalContrib += borrowed;
+        }
+
+        for (let m = 0; m < 12; m++) {
+          if (leverageFrequency === 'monthly') {
+            balance += borrowed;
+            totalContrib += borrowed;
+          }
+
+          let gain = balance * monthlyRate;
+          let debtInterest = borrowed * borrowedMonthlyRate;
+          balance += gain + contribution;
+          deposit += contribution;
+          interest += gain;
+          borrowInterest += debtInterest;
+        }
+
+        if (leverageFrequency === 'once' && y === 1) {
+          balance += borrowed;
+          totalContrib += borrowed;
+        }
+
+        totalContrib += deposit;
+        totalBorrowInterest += borrowInterest;
+        rows.push(`<tr><td>${y}</td><td>$${format(deposit)}</td><td>$${format(interest)}</td><td>$${format(borrowInterest)}</td><td>$${format(balance)}</td></tr>`);
+        labels.push('Year ' + y);
+        barData.push(balance);
+        interestData.push(interest - borrowInterest);
+        contribData.push(totalContrib);
+        contribution *= (1 + contribIncrease);
+      }
+
+      const realValue = balance / Math.pow(1 + inflation, years);
+      const netInterest = balance - totalContrib - totalBorrowInterest;
+
+      result.style.display = 'block';
+      result.innerHTML = `
+        <strong>Total Future Value: $${format(balance)}</strong>
+        <strong>Inflation Adjusted Value: $${format(realValue)}</strong>
+        <strong>Total Contributions: $${format(totalContrib)}</strong>
+        <strong>Total Borrow Interest Paid: $${format(totalBorrowInterest)}</strong>
+        <strong>Net Interest Earned: $${format(netInterest)}</strong>
+      `;
+
+      tbody.innerHTML = rows.join('');
+      document.getElementById('accumulationTable').style.display = 'table';
+
+      if (barChart) barChart.destroy();
+      barChart = new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Contributions', backgroundColor: '#4f46e5', data: contribData },
+            { label: 'Net Interest', backgroundColor: '#10b981', data: interestData }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Growth Over Time' } },
+          scales: { y: { ticks: { callback: val => '$' + val.toLocaleString() } } }
+        }
+      });
+
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(document.getElementById('pieChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Starting Amount', 'Additional Contributions', 'Net Interest'],
+          datasets: [{
+            data: [initial, totalContrib - initial - borrowed, netInterest],
+            backgroundColor: ['#06b6d4', '#4f46e5', '#10b981']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Portfolio Breakdown' } }
+        }
+      });
+    };
+  </script>
+</body>
+</html>
